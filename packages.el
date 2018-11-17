@@ -443,8 +443,8 @@ so change the default 'F' binding in the agenda to allow both"
       (defun bh/clock-in-organization-task-as-default ()
         (interactive)
         (org-with-point-at (org-id-find bh/organization-task-id 'marker)
-          (org-clock-in '(16)))))
-    ))
+          (org-clock-in '(16)))))))
+
 
 (defun gtd/post-init-org ()
   (add-to-list 'auto-mode-alist '("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode))
@@ -544,26 +544,6 @@ so change the default 'F' binding in the agenda to allow both"
                 ("DONE" ("WAITING") ("CANCELLED") ("HOLD")))))
 
   (setq org-directory gtd-org-dir)
-
-  ;; Capture templates for: TODO tasks, Notes, appointments, phone calls,
-  ;; meetings, and org-protocol
-  (setq org-capture-templates
-        (quote (("t" "todo" entry (file gtd-refile-target)
-                 "* TODO %?\n%U\n%a\n" :clock-in t :clock-resume t)
-                ("r" "respond" entry (file gtd-refile-target)
-                 "* NEXT Respond to %:from on %:subject\nSCHEDULED: %t\n%U\n%a\n" :clock-in t :clock-resume t :immediate-finish t)
-                ("n" "note" entry (file gtd-refile-target)
-                 "* %? :NOTE:\n%U\n%a\n" :clock-in t :clock-resume t)
-                ("j" "Journal" entry (file+datetree gtd-diary-target)
-                 "* %?\n%U\n" :clock-in t :clock-resume t)
-                ("w" "org-protocol" entry (file gtd-refile-target)
-                 "* TODO Review %c\n%U\n" :immediate-finish t)
-                ("m" "Meeting" entry (file gtd-refile-target)
-                 "* MEETING with %? :MEETING:\n%U" :clock-in t :clock-resume t)
-                ("p" "Phone call" entry (file gtd-refile-target)
-                 "* PHONE %? :PHONE:\n%U" :clock-in t :clock-resume t)
-                ("h" "Habit" entry (file gtd-refile-target)
-                 "* NEXT %?\n%U\n%a\nSCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: NEXT\n:END:\n"))))
 
   ;; Remove empty LOGBOOK drawers on clock out
   (defun bh/remove-empty-drawer-on-clock-out ()
@@ -1059,21 +1039,6 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
         (org-display-inline-images)
       (error nil)))
 
-  (org-babel-do-load-languages
-   (quote org-babel-load-languages)
-   (quote ((emacs-lisp . t)
-           (dot . t)
-           (ditaa . t)
-           (R . t)
-           (python . t)
-           (ruby . t)
-           (gnuplot . t)
-           (clojure . t)
-           (shell . t)
-           (ledger . t)
-           (org . t)
-           (plantuml . t)
-           (latex . t))))
 
   ;; Do not prompt to confirm evaluation
   ;; This may be dangerous - make sure you understand the consequences
@@ -1085,7 +1050,7 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
 
   ;; Don't enable this because it breaks access to emacs from my
   ;; Android phone
-  (setq org-startup-with-inline-images nil)
+  (setq org-startup-with-inline-images nil))
 
   ;; ;; experimenting with docbook exports - not finished
   ;; (setq org-export-docbook-xsl-fo-proc-command "fop %s %s")
@@ -1292,6 +1257,6 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
 
   ;; Variable org-show-entry-below is deprecated
   ;; (setq org-show-entry-below (quote ((default))))
-  )
+
 
 ;; EOF
