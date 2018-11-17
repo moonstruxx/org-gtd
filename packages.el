@@ -421,7 +421,7 @@ so change the default 'F' binding in the agenda to allow both"
   (setq org-agenda-skip-scheduled-if-deadline-is-shown  (quote repeated-after-deadline))
 
   (setq org-agenda-include-diary nil)
-  (setq org-agenda-diary-file "~/git/org/diary.org")
+  (setq org-agenda-diary-file gtd-diary-target)
   (setq org-agenda-insert-diary-extract-time t)
 
   ;; Include agenda archive files when searching for things
