@@ -11,25 +11,28 @@
   "Which auto-completion front end to use.")
 
 (defvar gtd-use-clock nil "")
-; Tags with fast selection keys
+
+(defvar gtd-agenda-exclude-fast '("gfg" "dwj")
+  "")
+                                        ; Tags with fast selection keys
 (defvar gtd-org-tag-alist (quote ((:startgroup)
-                            ("@bosch" . ?b)
-                            ("@homehi" . ?i)
-                            ("@home" . ?h)
-                            ("@gfg" . ?g)
-                            ("@city" . ?c)
-                            ("@kb" . ?k)
-                            (:endgroup)
-                            ("WAITING" . ?W)
-                            ("HOLD" . ?H)
-                            ("PERSONAL" . ?P)
-                            ("BOSCH" . ?B)
-                            ("GFG" . ?G)
-                            ("ORG" . ?O)
-                            ("crypt" . ?E)
-                            ("NOTE" . ?N)
-                            ("CANCELLED" . ?C)
-                            ("FLAGGED" . ??))))
+                                  ("@bosch" . ?b)
+                                  ("@homehi" . ?i)
+                                  ("@home" . ?h)
+                                  ("@gfg" . ?g)
+                                  ("@city" . ?c)
+                                  ("@kb" . ?k)
+                                  (:endgroup)
+                                  ("WAITING" . ?W)
+                                  ("HOLD" . ?H)
+                                  ("PERSONAL" . ?P)
+                                  ("BOSCH" . ?B)
+                                  ("GFG" . ?G)
+                                  ("ORG" . ?O)
+                                  ("crypt" . ?E)
+                                  ("NOTE" . ?N)
+                                  ("CANCELLED" . ?C)
+                                  ("FLAGGED" . ??))))
 (setq org-tag-alist gtd-org-tag-alist)
 
 ; Allow setting single tags without the menu
@@ -39,7 +42,7 @@
 (setq org-agenda-tags-todo-honor-ignore-options t)
 ;; Capture templates for: TODO tasks, Notes, appointments, phone calls,
 ;; meetings, and org-protocol
-(setq org-capture-templates
+(defvar gtd-org-capture-templates
       (quote (("t" "todo" entry (file gtd-refile-target)
                "* TODO %?\n%U\n%a\n" :clock-in t :clock-resume t)
               ("r" "respond" entry (file gtd-refile-target)
@@ -55,7 +58,8 @@
               ("p" "Phone call" entry (file gtd-refile-target)
                "* PHONE %? :PHONE:\n%U" :clock-in t :clock-resume t)
               ("h" "Habit" entry (file gtd-refile-target)
-               "* NEXT %?\n%U\n%a\nSCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: NEXT\n:END:\n"))))
+               "* NEXT %?\n%U\n%a\nSCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: NEXT\n:END:\n")))
+      "bla")
 
 (org-babel-do-load-languages
  (quote org-babel-load-languages)

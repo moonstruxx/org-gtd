@@ -11,11 +11,12 @@
 ;;; License: GPLv3
 
 (setq gtd-packages
-    '(
-      org
-      org-agenda
-      boxquote
-      ))
+      '(
+        org
+        org-agenda
+        boxquote
+        (org-capture :location local)
+        ))
 
 ;; List of packages to exclude.
 (setq gtd-excluded-packages '())
@@ -23,6 +24,16 @@
 (when (not (spacemacs/system-is-mswindows))
   (push 'bbdb gtd-packages))
 
+(defun gtd/init-org-capture ()
+  (use-package org-capture
+    :defer t
+    :commands org-capture
+    :config
+    (progn
+      (setq org-capture-templates gtd-org-capture-templates )
+      )
+    )
+  )
 (defun gtd/init-bbdb()
   (use-package bbdb
     :defer t
@@ -81,7 +92,9 @@
   (spacemacs|use-package-add-hook org-agenda
     :pre-init
     (progn
-      (use-package org-habit)
+      (use-package org-habit
+        :defer t
+        :commands org-is-habit-p)
       (defun bh/set-agenda-restriction-lock (arg)
         "Set restriction lock to current task subtree or file if prefix is specified"
         (interactive "p")
@@ -103,6 +116,16 @@
       (add-hook 'org-agenda-mode-hook
                 '(lambda () (org-defkey org-agenda-mode-map "\C-c\C-x<" 'bh/set-agenda-restriction-lock))
                 'append)
+      (defun bh/org-auto-exclude-function (tag)
+        "Automatic task exclusion in the agenda with / RET"
+        (and
+         (loop for ctag in gtd-agenda-exclude-fast do (if (string= tag ctag ) (return t)))
+         (concat "-" tag)))
+
+
+      (setq org-agenda-auto-exclude-function 'bh/org-auto-exclude-function)
+
+
       ;; Always hilight the current agenda line
       (add-hook 'org-agenda-mode-hook
                 '(lambda () (hl-line-mode 1))
@@ -331,17 +354,6 @@
 
 
 
-      (defun bh/org-auto-exclude-function (tag)
-        "Automatic task exclusion in the agenda with / RET"
-        (and (cond
-              ((string= tag "hold")
-               t)
-              ((string= tag "farm")
-               t))
-             (concat "-" tag)))
-
-      (setq org-agenda-auto-exclude-function 'bh/org-auto-exclude-function)
-
       (setq org-agenda-clock-consistency-checks
             (quote (:max-duration "4:00"
                                   :min-duration 0
@@ -466,13 +478,7 @@ so change the default 'F' binding in the agenda to allow both"
         (save-excursion
           (bh/find-project-task)
           (bh/narrow-to-org-subtree)))
-
-
-
       (defvar bh/project-list nil)
-
-
-
       )
     ))
 
