@@ -15,7 +15,6 @@
         org
         org-agenda
         boxquote
-        (org-capture :location local)
 	      )
       )
 
@@ -25,16 +24,6 @@
 (when (not (spacemacs/system-is-mswindows))
   (push 'bbdb gtd-packages))
 
-(defun gtd/init-org-capture ()
-  (use-package org-capture
-    :defer t
-    :commands org-capture
-    :config
-    (progn
-      (setq org-capture-templates gtd-org-capture-templates )
-      )
-    )
-  )
 (defun gtd/init-bbdb()
   (use-package bbdb
     :defer t
@@ -89,13 +78,12 @@
     ))
 
 (defun gtd/pre-init-org-agenda()
-
+  (use-package org-habit
+    :defer t
+    :commands org-is-habit-p)
   (spacemacs|use-package-add-hook org-agenda
     :pre-init
     (progn
-      (use-package org-habit
-        :defer t
-        :commands org-is-habit-p)
       (defun bh/set-agenda-restriction-lock (arg)
         "Set restriction lock to current task subtree or file if prefix is specified"
         (interactive "p")
@@ -496,6 +484,12 @@ so change the default 'F' binding in the agenda to allow both"
 
 (defun gtd/post-init-org ()
   (add-to-list 'auto-mode-alist '("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode))
+  (use-package org-capture
+    :defer t
+    :commands org-capture
+    :config
+    (progn
+      (setq org-capture-templates gtd-org-capture-templates)))
 
   (org-babel-do-load-languages
    (quote org-babel-load-languages)
