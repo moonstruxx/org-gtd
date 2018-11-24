@@ -16,7 +16,8 @@
         org-agenda
         boxquote
         (org-capture :location local)
-        ))
+	)
+)
 
 ;; List of packages to exclude.
 (setq gtd-excluded-packages '())
@@ -504,6 +505,12 @@ so change the default 'F' binding in the agenda to allow both"
 
 (defun gtd/post-init-org ()
   (add-to-list 'auto-mode-alist '("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode))
+
+  (org-babel-do-load-languages
+   (quote org-babel-load-languages)
+   gtd-org-babel-load-languages)
+
+
   (defun bh/hide-other ()
     (interactive)
     (save-excursion
@@ -530,6 +537,13 @@ so change the default 'F' binding in the agenda to allow both"
   (defun bh/switch-to-scratch ()
     (interactive)
     (switch-to-buffer "*scratch*"))
+
+  (setq org-tag-alist gtd-org-tag-alist)
+                           ; Allow setting single tags without the menu
+  (setq org-fast-tag-selection-single-key (quote expert))
+
+                                        ; For tag searches ignore tasks with scheduled and deadline dates
+  (setq org-agenda-tags-todo-honor-ignore-options t)
 
   ;; =TODO= state keywords and colour settings:
   (setq org-todo-keywords
@@ -566,7 +580,7 @@ so change the default 'F' binding in the agenda to allow both"
 
   (setq org-directory gtd-org-dir)
 
-  ;; Remove empty LOGBOOK drawers on clock out
+;; Remove empty LOGBOOK drawers on clock out
   (defun bh/remove-empty-drawer-on-clock-out ()
     (interactive)
     (save-excursion
@@ -576,174 +590,174 @@ so change the default 'F' binding in the agenda to allow both"
       ;; (org-remove-empty-drawer-at "LOGBOOK" (point))
       (org-remove-empty-drawer-at (point))))
 
-  (add-hook 'org-clock-out-hook 'bh/remove-empty-drawer-on-clock-out 'append)
 
   ;; Targets include this file and any file contributing to the agenda - up to 9 levels deep
   (setq org-refile-targets (quote ((nil :maxlevel . 9)
                                    (org-agenda-files :maxlevel . 9))))
 
-  ;; Use full outline paths for refile targets - we file directly with IDO
-  (setq org-refile-use-outline-path t)
+;; Use full outline paths for refile targets - we file directly with IDO
+(setq org-refile-use-outline-path t)
 
-  ;; ;; Targets complete directly with IDO
-  ;; (setq org-outline-path-complete-in-steps nil)
+;; ;; Targets complete directly with IDO
+;; (setq org-outline-path-complete-in-steps nil)
 
-  ;; Allow refile to create parent tasks with confirmation
-  (setq org-refile-allow-creating-parent-nodes (quote confirm))
+;; Allow refile to create parent tasks with confirmation
+(setq org-refile-allow-creating-parent-nodes (quote confirm))
 
-  ;;   ;; ;; Use IDO for both buffer and file completion and ido-everywhere to t
-  ;;   ;; (setq org-completion-use-ido t)
-  ;;   ;; (setq ido-everywhere t)
-  ;;   ;; (setq ido-max-directory-size 100000)
-  ;;   ;; (ido-mode (quote both))
-  ;;   ;; ;; Use the current window when visiting files and buffers with ido
-  ;;   ;; (setq ido-default-file-method 'selected-window)
-  ;;   ;; (setq ido-default-buffer-method 'selected-window)
-  ;;   ;; ;; Use the current window for indirect buffer display
-  ;;   ;; (setq org-indirect-buffer-display 'current-window)
+;;   ;; ;; Use IDO for both buffer and file completion and ido-everywhere to t
+;;   ;; (setq org-completion-use-ido t)
+;;   ;; (setq ido-everywhere t)
+;;   ;; (setq ido-max-directory-size 100000)
+;;   ;; (ido-mode (quote both))
+;;   ;; ;; Use the current window when visiting files and buffers with ido
+;;   ;; (setq ido-default-file-method 'selected-window)
+;;   ;; (setq ido-default-buffer-method 'selected-window)
+;;   ;; ;; Use the current window for indirect buffer display
+;;   ;; (setq org-indirect-buffer-display 'current-window)
 
 ;;;; Refile settings
-  ;; Exclude DONE state tasks from refile targets
-  (defun bh/verify-refile-target ()
-    "Exclude todo keywords with a done state from refile targets"
-    (not (member (nth 2 (org-heading-components)) org-done-keywords)))
+;; Exclude DONE state tasks from refile targets
+(defun bh/verify-refile-target ()
+  "Exclude todo keywords with a done state from refile targets"
+  (not (member (nth 2 (org-heading-components)) org-done-keywords)))
 
-  (setq org-refile-target-verify-function 'bh/verify-refile-target)
-  (when (eq gtd-use-clock t) (
+(setq org-refile-target-verify-function 'bh/verify-refile-target)
+(when (eq gtd-use-clock t) (
+                            (add-hook 'org-clock-out-hook 'bh/remove-empty-drawer-on-clock-out 'append)
 
-                              (defun bh/punch-in (arg)
-                                "Start continuous clocking and set the default task to the
+                            (defun bh/punch-in (arg)
+                              "Start continuous clocking and set the default task to the
 selected task.  If no task is selected set the Organization task
 as the default task."
-                                (interactive "p")
-                                (setq bh/keep-clock-running t)
-                                (if (equal major-mode 'org-agenda-mode)
-                                    ;;
-                                    ;; We're in the agenda
-                                    ;;
-                                    (let* ((marker (org-get-at-bol 'org-hd-marker))
-                                           (tags (org-with-point-at marker (org-get-tags-at))))
-                                      (if (and (eq arg 4) tags)
-                                          (org-agenda-clock-in '(16))
-                                        (bh/clock-in-organization-task-as-default)))
+                              (interactive "p")
+                              (setq bh/keep-clock-running t)
+                              (if (equal major-mode 'org-agenda-mode)
                                   ;;
-                                  ;; We are not in the agenda
+                                  ;; We're in the agenda
                                   ;;
+                                  (let* ((marker (org-get-at-bol 'org-hd-marker))
+                                         (tags (org-with-point-at marker (org-get-tags-at))))
+                                    (if (and (eq arg 4) tags)
+                                        (org-agenda-clock-in '(16))
+                                      (bh/clock-in-organization-task-as-default)))
+                                ;;
+                                ;; We are not in the agenda
+                                ;;
+                                (save-restriction
+                                  (widen)
+                                  ;; Find the tags on the current task
+                                  (if (and (equal major-mode 'org-mode) (not (org-before-first-heading-p)) (eq arg 4))
+                                      (org-clock-in '(16))
+                                    (bh/clock-in-organization-task-as-default)))))
+
+                            (defun bh/punch-out ()
+                              (interactive)
+                              (setq bh/keep-clock-running nil)
+                              (when (org-clock-is-active)
+                                (org-clock-out))
+                              (org-agenda-remove-restriction-lock))
+
+                            (defun bh/clock-in-default-task ()
+                              (save-excursion
+                                (org-with-point-at org-clock-default-task
+                                  (org-clock-in))))
+
+                            (defun bh/clock-in-parent-task ()
+                              "Move point to the parent (project) task if any and clock in"
+                              (let ((parent-task))
+                                (save-excursion
                                   (save-restriction
                                     (widen)
-                                    ;; Find the tags on the current task
-                                    (if (and (equal major-mode 'org-mode) (not (org-before-first-heading-p)) (eq arg 4))
-                                        (org-clock-in '(16))
-                                      (bh/clock-in-organization-task-as-default)))))
+                                    (while (and (not parent-task) (org-up-heading-safe))
+                                      (when (member (nth 2 (org-heading-components)) org-todo-keywords-1)
+                                        (setq parent-task (point))))
+                                    (if parent-task
+                                        (org-with-point-at parent-task
+                                          (org-clock-in))
+                                      (when bh/keep-clock-running
+                                        (bh/clock-in-default-task)))))))
 
-                              (defun bh/punch-out ()
-                                (interactive)
-                                (setq bh/keep-clock-running nil)
-                                (when (org-clock-is-active)
-                                  (org-clock-out))
-                                (org-agenda-remove-restriction-lock))
+                            (defvar bh/organization-task-id "e2fb68ed-2c63-4f32-9fa3-9ce17349191e")
 
-                              (defun bh/clock-in-default-task ()
-                                (save-excursion
-                                  (org-with-point-at org-clock-default-task
-                                    (org-clock-in))))
+                            (defun bh/clock-out-maybe ()
+                              (when (and bh/keep-clock-running
+                                         (not org-clock-clocking-in)
+                                         (marker-buffer org-clock-default-task)
+                                         (not org-clock-resolving-clocks-due-to-idleness))
+                                (bh/clock-in-parent-task)))
 
-                              (defun bh/clock-in-parent-task ()
-                                "Move point to the parent (project) task if any and clock in"
-                                (let ((parent-task))
-                                  (save-excursion
-                                    (save-restriction
-                                      (widen)
-                                      (while (and (not parent-task) (org-up-heading-safe))
-                                        (when (member (nth 2 (org-heading-components)) org-todo-keywords-1)
-                                          (setq parent-task (point))))
-                                      (if parent-task
-                                          (org-with-point-at parent-task
-                                            (org-clock-in))
-                                        (when bh/keep-clock-running
-                                          (bh/clock-in-default-task)))))))
+                            (add-hook 'org-clock-out-hook 'bh/clock-out-maybe 'append)
 
-                              (defvar bh/organization-task-id "e2fb68ed-2c63-4f32-9fa3-9ce17349191e")
-
-                              (defun bh/clock-out-maybe ()
-                                (when (and bh/keep-clock-running
-                                           (not org-clock-clocking-in)
-                                           (marker-buffer org-clock-default-task)
-                                           (not org-clock-resolving-clocks-due-to-idleness))
-                                  (bh/clock-in-parent-task)))
-
-                              (add-hook 'org-clock-out-hook 'bh/clock-out-maybe 'append)
-
-                              (defun bh/clock-in-last-task (arg)
-                                "Clock in the interrupted task if there is one
+                            (defun bh/clock-in-last-task (arg)
+                              "Clock in the interrupted task if there is one
 Skip the default task and get the next one.
 A prefix arg forces clock in of the default task."
-                                (interactive "p")
-                                (let ((clock-in-to-task
-                                       (cond
-                                        ((eq arg 4) org-clock-default-task)
-                                        ((and (org-clock-is-active)
-                                              (equal org-clock-default-task (cadr org-clock-history)))
-                                         (caddr org-clock-history))
-                                        ((org-clock-is-active) (cadr org-clock-history))
-                                        ((equal org-clock-default-task (car org-clock-history)) (cadr org-clock-history))
-                                        (t (car org-clock-history)))))
-                                  (widen)
-                                  (org-with-point-at clock-in-to-task
-                                    (org-clock-in nil))))
-                              (defun bh/clock-in-to-next (kw)
-                                "Switch a task from TODO to NEXT when clocking in.
+                              (interactive "p")
+                              (let ((clock-in-to-task
+                                     (cond
+                                      ((eq arg 4) org-clock-default-task)
+                                      ((and (org-clock-is-active)
+                                            (equal org-clock-default-task (cadr org-clock-history)))
+                                       (caddr org-clock-history))
+                                      ((org-clock-is-active) (cadr org-clock-history))
+                                      ((equal org-clock-default-task (car org-clock-history)) (cadr org-clock-history))
+                                      (t (car org-clock-history)))))
+                                (widen)
+                                (org-with-point-at clock-in-to-task
+                                  (org-clock-in nil))))
+                            (defun bh/clock-in-to-next (kw)
+                              "Switch a task from TODO to NEXT when clocking in.
 Skips capture tasks, projects, and subprojects.
 Switch projects and subprojects from NEXT back to TODO"
-                                (when (not (and (boundp 'org-capture-mode) org-capture-mode))
-                                  (cond
-                                   ((and (member (org-get-todo-state) (list "TODO"))
-                                         (bh/is-task-p))
-                                    "NEXT")
-                                   ((and (member (org-get-todo-state) (list "NEXT"))
-                                         (bh/is-project-p))
-                                    "TODO"))))
-                              ;; Show lot of clocking history so it's easy to pick items off the C-F11 list
-                              (setq org-clock-history-length 23)
-                              ;; Resume clocking task on clock-in if the clock is open
-                              (setq org-clock-in-resume t)
-                              ;; Change tasks to NEXT when clocking in
-                              (setq org-clock-in-switch-to-state 'bh/clock-in-to-next)
-                              ;; Separate drawers for clocking and logs
-                              (setq org-drawers (quote ("PROPERTIES" "LOGBOOK")))
-                              ;; Save clock data and state changes and notes in the LOGBOOK drawer
-                              (setq org-clock-into-drawer t)
-                              ;; Sometimes I change tasks I'm clocking quickly - this removes clocked tasks with 0:00 duration
-                              (setq org-clock-out-remove-zero-time-clocks t)
-                              ;; Clock out when moving task to a done state
-                              (setq org-clock-out-when-done t)
-                              ;; Save the running clock and all clock history when exiting Emacs, load it on startup-screen-inhibit-startup-screen
-                              (setq org-clock-persist t)
-                              ;; Do not prompt to resume an active clock
-                              (setq org-clock-persist-query-resume nil)
-                              ;; Enable auto clock resolution for finding open clocks
-                              (setq org-clock-auto-clock-resolution (quote when-no-clock-is-running))
-                              ;; Include current clocking task in clock reports
-                              (setq org-clock-report-include-clocking-task t)
-                              ;; Resolve open clocks if the user is idle for more than 10 minutes.
-                              (setq org-clock-idle-time 10)
-                              ;;
-                              ;; Resume clocking task when emacs is restarted
-                              (org-clock-persistence-insinuate)
-                              (setq bh/keep-clock-running nil)
-			      )
-	)
+                              (when (not (and (boundp 'org-capture-mode) org-capture-mode))
+                                (cond
+                                 ((and (member (org-get-todo-state) (list "TODO"))
+                                       (bh/is-task-p))
+                                  "NEXT")
+                                 ((and (member (org-get-todo-state) (list "NEXT"))
+                                       (bh/is-project-p))
+                                  "TODO"))))
+                            ;; Show lot of clocking history so it's easy to pick items off the C-F11 list
+                            (setq org-clock-history-length 23)
+                            ;; Resume clocking task on clock-in if the clock is open
+                            (setq org-clock-in-resume t)
+                            ;; Change tasks to NEXT when clocking in
+                            (setq org-clock-in-switch-to-state 'bh/clock-in-to-next)
+                            ;; Separate drawers for clocking and logs
+                            (setq org-drawers (quote ("PROPERTIES" "LOGBOOK")))
+                            ;; Save clock data and state changes and notes in the LOGBOOK drawer
+                            (setq org-clock-into-drawer t)
+                            ;; Sometimes I change tasks I'm clocking quickly - this removes clocked tasks with 0:00 duration
+                            (setq org-clock-out-remove-zero-time-clocks t)
+                            ;; Clock out when moving task to a done state
+                            (setq org-clock-out-when-done t)
+                            ;; Save the running clock and all clock history when exiting Emacs, load it on startup-screen-inhibit-startup-screen
+                            (setq org-clock-persist t)
+                            ;; Do not prompt to resume an active clock
+                            (setq org-clock-persist-query-resume nil)
+                            ;; Enable auto clock resolution for finding open clocks
+                            (setq org-clock-auto-clock-resolution (quote when-no-clock-is-running))
+                            ;; Include current clocking task in clock reports
+                            (setq org-clock-report-include-clocking-task t)
+                            ;; Resolve open clocks if the user is idle for more than 10 minutes.
+                            (setq org-clock-idle-time 10)
+                            ;;
+                            ;; Resume clocking task when emacs is restarted
+                            (org-clock-persistence-insinuate)
+                            (setq bh/keep-clock-running nil)
+			                      )
+	    )
 
-        (defun bh/find-project-task ()
-          "Move point to the parent (project) task if any"
-          (save-restriction
-            (widen)
-            (let ((parent-task (save-excursion (org-back-to-heading 'invisible-ok) (point))))
-              (while (org-up-heading-safe)
-                (when (member (nth 2 (org-heading-components)) org-todo-keywords-1)
-                  (setq parent-task (point))))
-              (goto-char parent-task)
-              parent-task)))
+(defun bh/find-project-task ()
+  "Move point to the parent (project) task if any"
+  (save-restriction
+    (widen)
+    (let ((parent-task (save-excursion (org-back-to-heading 'invisible-ok) (point))))
+      (while (org-up-heading-safe)
+        (when (member (nth 2 (org-heading-components)) org-todo-keywords-1)
+          (setq parent-task (point))))
+      (goto-char parent-task)
+      parent-task)))
 
 
 (setq org-time-stamp-rounding-minutes (quote (1 1)))
@@ -1074,211 +1088,211 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
 ;; Android phone
 (setq org-startup-with-inline-images nil))
 
-        ;; ;; experimenting with docbook exports - not finished
-        ;; (setq org-export-docbook-xsl-fo-proc-command "fop %s %s")
-        ;; (setq org-export-docbook-xslt-proc-command "xsltproc --output %s /usr/share/xml/docbook/stylesheet/nwalsh/fo/docbook.xsl %s")
-        ;; ;;
-        ;; ;; Inline images in HTML instead of producting links to the image
-        ;; (setq org-html-inline-images t)
-        ;; ;; Do not use sub or superscripts - I currently don't need this functionality in my documents
-        ;; (setq org-export-with-sub-superscripts nil)
-        ;; ;; Use org.css from the norang website for export document stylesheets
-        ;; (setq org-html-head-extra "<link rel=\"stylesheet\" href=\"http://doc.norang.ca/org.css\" type=\"text/css\" />")
-        ;; (setq org-html-head-include-default-style nil)
-        ;; ;; Do not generate internal css formatting for HTML exports
-        ;; (setq org-export-htmlize-output-type (quote css))
-        ;; ;; Export with LaTeX fragments
-        ;; (setq org-export-with-LaTeX-fragments t)
-        ;; ;; Increase default number of headings to export
-        ;; (setq org-export-headline-levels 6)
+;; ;; experimenting with docbook exports - not finished
+;; (setq org-export-docbook-xsl-fo-proc-command "fop %s %s")
+;; (setq org-export-docbook-xslt-proc-command "xsltproc --output %s /usr/share/xml/docbook/stylesheet/nwalsh/fo/docbook.xsl %s")
+;; ;;
+;; ;; Inline images in HTML instead of producting links to the image
+;; (setq org-html-inline-images t)
+;; ;; Do not use sub or superscripts - I currently don't need this functionality in my documents
+;; (setq org-export-with-sub-superscripts nil)
+;; ;; Use org.css from the norang website for export document stylesheets
+;; (setq org-html-head-extra "<link rel=\"stylesheet\" href=\"http://doc.norang.ca/org.css\" type=\"text/css\" />")
+;; (setq org-html-head-include-default-style nil)
+;; ;; Do not generate internal css formatting for HTML exports
+;; (setq org-export-htmlize-output-type (quote css))
+;; ;; Export with LaTeX fragments
+;; (setq org-export-with-LaTeX-fragments t)
+;; ;; Increase default number of headings to export
+;; (setq org-export-headline-levels 6)
 
-        ;; ;; List of projects
-        ;; ;; norang       - http://www.norang.ca/
-        ;; ;; doc          - http://doc.norang.ca/
-        ;; ;; org-mode-doc - http://doc.norang.ca/org-mode.html and associated files
-        ;; ;; org          - miscellaneous todo lists for publishing
-        ;; (setq org-publish-project-alist
-        ;;       ;;
-        ;;       ;; http://www.norang.ca/  (norang website)
-        ;;       ;; norang-org are the org-files that generate the content
-        ;;       ;; norang-extra are images and css files that need to be included
-        ;;       ;; norang is the top-level project that gets published
-        ;;       (quote (("norang-org"
-        ;;                :base-directory "~/git/www.norang.ca"
-        ;;                :publishing-directory "/ssh:www-data@www:~/www.norang.ca/htdocs"
-        ;;                :recursive t
-        ;;                :table-of-contents nil
-        ;;                :base-extension "org"
-        ;;                :publishing-function org-html-publish-to-html
-        ;;                :style-include-default nil
-        ;;                :section-numbers nil
-        ;;                :table-of-contents nil
-        ;;                :html-head "<link rel=\"stylesheet\" href=\"norang.css\" type=\"text/css\" />"
-        ;;                :author-info nil
-        ;;                :creator-info nil)
-        ;;               ("norang-extra"
-        ;;                :base-directory "~/git/www.norang.ca/"
-        ;;                :publishing-directory "/ssh:www-data@www:~/www.norang.ca/htdocs"
-        ;;                :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
-        ;;                :publishing-function org-publish-attachment
-        ;;                :recursive t
-        ;;                :author nil)
-        ;;               ("norang"
-        ;;                :components ("norang-org" "norang-extra"))
-        ;;               ;;
-        ;;               ;; http://doc.norang.ca/  (norang website)
-        ;;               ;; doc-org are the org-files that generate the content
-        ;;               ;; doc-extra are images and css files that need to be included
-        ;;               ;; doc is the top-level project that gets published
-        ;;               ("doc-org"
-        ;;                :base-directory "~/git/doc.norang.ca/"
-        ;;                :publishing-directory "/ssh:www-data@www:~/doc.norang.ca/htdocs"
-        ;;                :recursive nil
-        ;;                :section-numbers nil
-        ;;                :table-of-contents nil
-        ;;                :base-extension "org"
-        ;;                :publishing-function (org-html-publish-to-html org-org-publish-to-org)
-        ;;                :style-include-default nil
-        ;;                :html-head "<link rel=\"stylesheet\" href=\"/org.css\" type=\"text/css\" />"
-        ;;                :author-info nil
-        ;;                :creator-info nil)
-        ;;               ("doc-extra"
-        ;;                :base-directory "~/git/doc.norang.ca/"
-        ;;                :publishing-directory "/ssh:www-data@www:~/doc.norang.ca/htdocs"
-        ;;                :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
-        ;;                :publishing-function org-publish-attachment
-        ;;                :recursive nil
-        ;;                :author nil)
-        ;;               ("doc"
-        ;;                :components ("doc-org" "doc-extra"))
-        ;;               ("doc-private-org"
-        ;;                :base-directory "~/git/doc.norang.ca/private"
-        ;;                :publishing-directory "/ssh:www-data@www:~/doc.norang.ca/htdocs/private"
-        ;;                :recursive nil
-        ;;                :section-numbers nil
-        ;;                :table-of-contents nil
-        ;;                :base-extension "org"
-        ;;                :publishing-function (org-html-publish-to-html org-org-publish-to-org)
-        ;;                :style-include-default nil
-        ;;                :html-head "<link rel=\"stylesheet\" href=\"/org.css\" type=\"text/css\" />"
-        ;;                :auto-sitemap t
-        ;;                :sitemap-filename "index.html"
-        ;;                :sitemap-title "Norang Private Documents"
-        ;;                :sitemap-style "tree"
-        ;;                :author-info nil
-        ;;                :creator-info nil)
-        ;;               ("doc-private-extra"
-        ;;                :base-directory "~/git/doc.norang.ca/private"
-        ;;                :publishing-directory "/ssh:www-data@www:~/doc.norang.ca/htdocs/private"
-        ;;                :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
-        ;;                :publishing-function org-publish-attachment
-        ;;                :recursive nil
-        ;;                :author nil)
-        ;;               ("doc-private"
-        ;;                :components ("doc-private-org" "doc-private-extra"))
-        ;;               ;;
-        ;;               ;; Miscellaneous pages for other websites
-        ;;               ;; org are the org-files that generate the content
-        ;;               ("org-org"
-        ;;                :base-directory "~/git/org/"
-        ;;                :publishing-directory "/ssh:www-data@www:~/org"
-        ;;                :recursive t
-        ;;                :section-numbers nil
-        ;;                :table-of-contents nil
-        ;;                :base-extension "org"
-        ;;                :publishing-function org-html-publish-to-html
-        ;;                :style-include-default nil
-        ;;                :html-head "<link rel=\"stylesheet\" href=\"/org.css\" type=\"text/css\" />"
-        ;;                :author-info nil
-        ;;                :creator-info nil)
-        ;;               ;;
-        ;;               ;; http://doc.norang.ca/  (norang website)
-        ;;               ;; org-mode-doc-org this document
-        ;;               ;; org-mode-doc-extra are images and css files that need to be included
-        ;;               ;; org-mode-doc is the top-level project that gets published
-        ;;               ;; This uses the same target directory as the 'doc' project
-        ;;               ("org-mode-doc-org"
-        ;;                :base-directory "~/git/org-mode-doc/"
-        ;;                :publishing-directory "/ssh:www-data@www:~/doc.norang.ca/htdocs"
-        ;;                :recursive t
-        ;;                :section-numbers nil
-        ;;                :table-of-contents nil
-        ;;                :base-extension "org"
-        ;;                :publishing-function (org-html-publish-to-html)
-        ;;                :plain-source t
-        ;;                :htmlized-source t
-        ;;                :style-include-default nil
-        ;;                :html-head "<link rel=\"stylesheet\" href=\"/org.css\" type=\"text/css\" />"
-        ;;                :author-info nil
-        ;;                :creator-info nil)
-        ;;               ("org-mode-doc-extra"
-        ;;                :base-directory "~/git/org-mode-doc/"
-        ;;                :publishing-directory "/ssh:www-data@www:~/doc.norang.ca/htdocs"
-        ;;                :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|org"
-        ;;                :publishing-function org-publish-attachment
-        ;;                :recursive t
-        ;;                :author nil)
-        ;;               ("org-mode-doc"
-        ;;                :components ("org-mode-doc-org" "org-mode-doc-extra"))
-        ;;               ;;
-        ;;               ;; http://doc.norang.ca/  (norang website)
-        ;;               ;; org-mode-doc-org this document
-        ;;               ;; org-mode-doc-extra are images and css files that need to be included
-        ;;               ;; org-mode-doc is the top-level project that gets published
-        ;;               ;; This uses the same target directory as the 'doc' project
-        ;;               ("tmp-org"
-        ;;                :base-directory "/tmp/publish/"
-        ;;                :publishing-directory "/ssh:www-data@www:~/www.norang.ca/htdocs/tmp"
-        ;;                :recursive t
-        ;;                :section-numbers nil
-        ;;                :table-of-contents nil
-        ;;                :base-extension "org"
-        ;;                :publishing-function (org-html-publish-to-html org-org-publish-to-org)
-        ;;                :html-head "<link rel=\"stylesheet\" href=\"http://doc.norang.ca/org.css\" type=\"text/css\" />"
-        ;;                :plain-source t
-        ;;                :htmlized-source t
-        ;;                :style-include-default nil
-        ;;                :auto-sitemap t
-        ;;                :sitemap-filename "index.html"
-        ;;                :sitemap-title "Test Publishing Area"
-        ;;                :sitemap-style "tree"
-        ;;                :author-info t
-        ;;                :creator-info t)
-        ;;               ("tmp-extra"
-        ;;                :base-directory "/tmp/publish/"
-        ;;                :publishing-directory "/ssh:www-data@www:~/www.norang.ca/htdocs/tmp"
-        ;;                :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
-        ;;                :publishing-function org-publish-attachment
-        ;;                :recursive t
-        ;;                :author nil)
-        ;;               ("tmp"
-        ;;                :components ("tmp-org" "tmp-extra")))))
+;; ;; List of projects
+;; ;; norang       - http://www.norang.ca/
+;; ;; doc          - http://doc.norang.ca/
+;; ;; org-mode-doc - http://doc.norang.ca/org-mode.html and associated files
+;; ;; org          - miscellaneous todo lists for publishing
+;; (setq org-publish-project-alist
+;;       ;;
+;;       ;; http://www.norang.ca/  (norang website)
+;;       ;; norang-org are the org-files that generate the content
+;;       ;; norang-extra are images and css files that need to be included
+;;       ;; norang is the top-level project that gets published
+;;       (quote (("norang-org"
+;;                :base-directory "~/git/www.norang.ca"
+;;                :publishing-directory "/ssh:www-data@www:~/www.norang.ca/htdocs"
+;;                :recursive t
+;;                :table-of-contents nil
+;;                :base-extension "org"
+;;                :publishing-function org-html-publish-to-html
+;;                :style-include-default nil
+;;                :section-numbers nil
+;;                :table-of-contents nil
+;;                :html-head "<link rel=\"stylesheet\" href=\"norang.css\" type=\"text/css\" />"
+;;                :author-info nil
+;;                :creator-info nil)
+;;               ("norang-extra"
+;;                :base-directory "~/git/www.norang.ca/"
+;;                :publishing-directory "/ssh:www-data@www:~/www.norang.ca/htdocs"
+;;                :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
+;;                :publishing-function org-publish-attachment
+;;                :recursive t
+;;                :author nil)
+;;               ("norang"
+;;                :components ("norang-org" "norang-extra"))
+;;               ;;
+;;               ;; http://doc.norang.ca/  (norang website)
+;;               ;; doc-org are the org-files that generate the content
+;;               ;; doc-extra are images and css files that need to be included
+;;               ;; doc is the top-level project that gets published
+;;               ("doc-org"
+;;                :base-directory "~/git/doc.norang.ca/"
+;;                :publishing-directory "/ssh:www-data@www:~/doc.norang.ca/htdocs"
+;;                :recursive nil
+;;                :section-numbers nil
+;;                :table-of-contents nil
+;;                :base-extension "org"
+;;                :publishing-function (org-html-publish-to-html org-org-publish-to-org)
+;;                :style-include-default nil
+;;                :html-head "<link rel=\"stylesheet\" href=\"/org.css\" type=\"text/css\" />"
+;;                :author-info nil
+;;                :creator-info nil)
+;;               ("doc-extra"
+;;                :base-directory "~/git/doc.norang.ca/"
+;;                :publishing-directory "/ssh:www-data@www:~/doc.norang.ca/htdocs"
+;;                :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
+;;                :publishing-function org-publish-attachment
+;;                :recursive nil
+;;                :author nil)
+;;               ("doc"
+;;                :components ("doc-org" "doc-extra"))
+;;               ("doc-private-org"
+;;                :base-directory "~/git/doc.norang.ca/private"
+;;                :publishing-directory "/ssh:www-data@www:~/doc.norang.ca/htdocs/private"
+;;                :recursive nil
+;;                :section-numbers nil
+;;                :table-of-contents nil
+;;                :base-extension "org"
+;;                :publishing-function (org-html-publish-to-html org-org-publish-to-org)
+;;                :style-include-default nil
+;;                :html-head "<link rel=\"stylesheet\" href=\"/org.css\" type=\"text/css\" />"
+;;                :auto-sitemap t
+;;                :sitemap-filename "index.html"
+;;                :sitemap-title "Norang Private Documents"
+;;                :sitemap-style "tree"
+;;                :author-info nil
+;;                :creator-info nil)
+;;               ("doc-private-extra"
+;;                :base-directory "~/git/doc.norang.ca/private"
+;;                :publishing-directory "/ssh:www-data@www:~/doc.norang.ca/htdocs/private"
+;;                :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
+;;                :publishing-function org-publish-attachment
+;;                :recursive nil
+;;                :author nil)
+;;               ("doc-private"
+;;                :components ("doc-private-org" "doc-private-extra"))
+;;               ;;
+;;               ;; Miscellaneous pages for other websites
+;;               ;; org are the org-files that generate the content
+;;               ("org-org"
+;;                :base-directory "~/git/org/"
+;;                :publishing-directory "/ssh:www-data@www:~/org"
+;;                :recursive t
+;;                :section-numbers nil
+;;                :table-of-contents nil
+;;                :base-extension "org"
+;;                :publishing-function org-html-publish-to-html
+;;                :style-include-default nil
+;;                :html-head "<link rel=\"stylesheet\" href=\"/org.css\" type=\"text/css\" />"
+;;                :author-info nil
+;;                :creator-info nil)
+;;               ;;
+;;               ;; http://doc.norang.ca/  (norang website)
+;;               ;; org-mode-doc-org this document
+;;               ;; org-mode-doc-extra are images and css files that need to be included
+;;               ;; org-mode-doc is the top-level project that gets published
+;;               ;; This uses the same target directory as the 'doc' project
+;;               ("org-mode-doc-org"
+;;                :base-directory "~/git/org-mode-doc/"
+;;                :publishing-directory "/ssh:www-data@www:~/doc.norang.ca/htdocs"
+;;                :recursive t
+;;                :section-numbers nil
+;;                :table-of-contents nil
+;;                :base-extension "org"
+;;                :publishing-function (org-html-publish-to-html)
+;;                :plain-source t
+;;                :htmlized-source t
+;;                :style-include-default nil
+;;                :html-head "<link rel=\"stylesheet\" href=\"/org.css\" type=\"text/css\" />"
+;;                :author-info nil
+;;                :creator-info nil)
+;;               ("org-mode-doc-extra"
+;;                :base-directory "~/git/org-mode-doc/"
+;;                :publishing-directory "/ssh:www-data@www:~/doc.norang.ca/htdocs"
+;;                :base-extension "css\\|pdf\\|png\\|jpg\\|gif\\|org"
+;;                :publishing-function org-publish-attachment
+;;                :recursive t
+;;                :author nil)
+;;               ("org-mode-doc"
+;;                :components ("org-mode-doc-org" "org-mode-doc-extra"))
+;;               ;;
+;;               ;; http://doc.norang.ca/  (norang website)
+;;               ;; org-mode-doc-org this document
+;;               ;; org-mode-doc-extra are images and css files that need to be included
+;;               ;; org-mode-doc is the top-level project that gets published
+;;               ;; This uses the same target directory as the 'doc' project
+;;               ("tmp-org"
+;;                :base-directory "/tmp/publish/"
+;;                :publishing-directory "/ssh:www-data@www:~/www.norang.ca/htdocs/tmp"
+;;                :recursive t
+;;                :section-numbers nil
+;;                :table-of-contents nil
+;;                :base-extension "org"
+;;                :publishing-function (org-html-publish-to-html org-org-publish-to-org)
+;;                :html-head "<link rel=\"stylesheet\" href=\"http://doc.norang.ca/org.css\" type=\"text/css\" />"
+;;                :plain-source t
+;;                :htmlized-source t
+;;                :style-include-default nil
+;;                :auto-sitemap t
+;;                :sitemap-filename "index.html"
+;;                :sitemap-title "Test Publishing Area"
+;;                :sitemap-style "tree"
+;;                :author-info t
+;;                :creator-info t)
+;;               ("tmp-extra"
+;;                :base-directory "/tmp/publish/"
+;;                :publishing-directory "/ssh:www-data@www:~/www.norang.ca/htdocs/tmp"
+;;                :base-extension "css\\|pdf\\|png\\|jpg\\|gif"
+;;                :publishing-function org-publish-attachment
+;;                :recursive t
+;;                :author nil)
+;;               ("tmp"
+;;                :components ("tmp-org" "tmp-extra")))))
 
-        ;; ;; I'm lazy and don't want to remember the name of the project to publish when I modify
-        ;; ;; a file that is part of a project.  So this function saves the file, and publishes
-        ;; ;; the project that includes this file
-        ;; ;;
-        ;; ;; It's bound to C-S-F12 so I just edit and hit C-S-F12 when I'm done and move on to the next thing
-        ;; (defun bh/save-then-publish (&optional force)
-        ;;   (interactive "P")
-        ;;   (save-buffer)
-        ;;   (org-save-all-org-buffers)
-        ;;   (let ((org-html-head-extra)
-        ;;         (org-html-validation-link "<a href=\"http://validator.w3.org/check?uri=referer\">Validate XHTML 1.0</a>"))
-        ;;     (org-publish-current-project force)))
+;; ;; I'm lazy and don't want to remember the name of the project to publish when I modify
+;; ;; a file that is part of a project.  So this function saves the file, and publishes
+;; ;; the project that includes this file
+;; ;;
+;; ;; It's bound to C-S-F12 so I just edit and hit C-S-F12 when I'm done and move on to the next thing
+;; (defun bh/save-then-publish (&optional force)
+;;   (interactive "P")
+;;   (save-buffer)
+;;   (org-save-all-org-buffers)
+;;   (let ((org-html-head-extra)
+;;         (org-html-validation-link "<a href=\"http://validator.w3.org/check?uri=referer\">Validate XHTML 1.0</a>"))
+;;     (org-publish-current-project force)))
 
-        ;; (global-set-key (kbd "C-s-<f12>") 'bh/save-then-publish)
+;; (global-set-key (kbd "C-s-<f12>") 'bh/save-then-publish)
 
-        ;; (setq org-latex-listings t)
+;; (setq org-latex-listings t)
 
-        ;; (setq org-html-xml-declaration (quote (("html" . "")
-        ;;                                        ("was-html" . "<?xml version=\"1.0\" encoding=\"%s\"?>")
-        ;;                                        ("php" . "<?php echo \"<?xml version=\\\"1.0\\\" encoding=\\\"%s\\\" ?>\"; ?>"))))
+;; (setq org-html-xml-declaration (quote (("html" . "")
+;;                                        ("was-html" . "<?xml version=\"1.0\" encoding=\"%s\"?>")
+;;                                        ("php" . "<?php echo \"<?xml version=\\\"1.0\\\" encoding=\\\"%s\\\" ?>\"; ?>"))))
 
-        ;; (setq org-export-allow-BIND t)
+;; (setq org-export-allow-BIND t)
 
-        ;; Variable org-show-entry-below is deprecated
-        ;; (setq org-show-entry-below (quote ((default))))
+;; Variable org-show-entry-below is deprecated
+;; (setq org-show-entry-below (quote ((default))))
 
 
-        ;; EOF
+;; EOF

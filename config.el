@@ -33,14 +33,8 @@
                                   ("NOTE" . ?N)
                                   ("CANCELLED" . ?C)
                                   ("FLAGGED" . ??))))
-(setq org-tag-alist gtd-org-tag-alist)
 
-; Allow setting single tags without the menu
-(setq org-fast-tag-selection-single-key (quote expert))
-
-; For tag searches ignore tasks with scheduled and deadline dates
-(setq org-agenda-tags-todo-honor-ignore-options t)
-;; Capture templates for: TODO tasks, Notes, appointments, phone calls,
+             ;; Capture templates for: TODO tasks, Notes, appointments, phone calls,
 ;; meetings, and org-protocol
 (defvar gtd-org-capture-templates
       (quote (("t" "todo" entry (file gtd-refile-target)
@@ -61,18 +55,19 @@
                "* NEXT %?\n%U\n%a\nSCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: NEXT\n:END:\n")))
       "bla")
 
-(org-babel-do-load-languages
- (quote org-babel-load-languages)
- (quote ((emacs-lisp . t)
-         (dot . t)
-         (ditaa . t)
-         (R . t)
-         (python . t)
-         (ruby . t)
-         (gnuplot . t)
-         (clojure . t)
-         (shell . t)
-         (ledger . t)
-         (org . t)
-         (plantuml . t)
-         (latex . t))))
+
+(defvar gtd-org-babel-load-languages
+   '((emacs-lisp . t)
+        (dot . t)
+        (ditaa . t)
+        (R . t)
+        (python . t)
+        (ruby . t)
+        (gnuplot . t)
+        (clojure . t)
+        (shell . t)
+        (ledger . t)
+        (org . t)
+        (plantuml . t)
+        (latex . t))
+  "bla")
