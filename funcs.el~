@@ -1,5 +1,4 @@
-;(when (configuration-layer/package-used-p 'org-agenda)
-(defvar bh/hide-scheduled-and-waiting-next-tasks t)	
+(when (configuration-layer/package-used-p 'org-agenda)
   (defun bh/view-next-project ()
     (interactive)
     (let (num-project-left current-project)
@@ -220,6 +219,9 @@ so change the default 'F' binding in the agenda to allow both"
     (org-with-point-at (org-id-find bh/organization-task-id 'marker)
       (org-clock-in '(16))))
 
+  (org-babel-do-load-languages
+   (quote org-babel-load-languages)
+   gtd-org-babel-load-languages)
 
 
   (defun bh/hide-other ()
@@ -526,16 +528,7 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
          (org-display-inline-images)
        (error nil)))
 
- (defun bh/find-project-task ()
-    "Move point to the parent (project) task if any"
-    (save-restriction
-      (widen)
-      (let ((parent-task (save-excursion (org-back-to-heading 'invisible-ok) (point))))
-        (while (org-up-heading-safe)
-          (when (member (nth 2 (org-heading-components)) org-todo-keywords-1)
-            (setq parent-task (point))))
-        (goto-char parent-task)
-        parent-task)))
 
 
 
+  )
