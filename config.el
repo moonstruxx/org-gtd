@@ -9,6 +9,8 @@
 
 (defvar gtd-diary-target "~/git/gtd/diary.org"
   "Which auto-completion front end to use.")
+
+(defvar gtd-use-clock nil "")
 ; Tags with fast selection keys
 (defvar gtd-org-tag-alist (quote ((:startgroup)
                             ("@bosch" . ?b)
