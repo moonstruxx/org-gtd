@@ -24,6 +24,7 @@
 (when (not (spacemacs/system-is-mswindows))
   (push 'bbdb gtd-packages))
 
+
 (defun gtd/init-bbdb()
   (use-package bbdb
     :defer t
@@ -46,7 +47,7 @@
           (when (> (length name) 0)
             ;; Something was supplied - look it up in bbdb
             (setq rec
-               (or (first
+                  (or (first
                        (or (bbdb-search (bbdb-records) name nil nil)
                            (bbdb-search (bbdb-records) nil name nil)))
                       name)))
@@ -66,7 +67,7 @@
       )
     )
   )
-
+ 
 
 (defun gtd/init-boxquote()
   (use-package boxquote
@@ -76,12 +77,20 @@
            ( "<f9> f" . boxquote-insert-file))))
 
 
-
-
 (defun gtd/pre-init-org-agenda()
   (use-package org-habit
     :defer t
     :commands org-is-habit-p)
+  )
+
+(defun gtd/pre-init-org-archive ()
+  (spacemacs|use-package-add-hook org-archive
+    :post-config
+    (progn
+       (setq org-archive-mark-done nil)
+       (setq org-archive-location "%s_archive::* Archived Tasks")
+      )
+    )
   )
 
 (defun gtd/post-init-org-agenda ()
@@ -261,13 +270,9 @@
     :post-config
     (progn
       (setq org-default-notes-file gtd-refile-target)
-
       (use-package org-id
         :defer t
         :commands org-id-find)))
-  (spacemacs|use-package-add-hook org-agenda
-    :bind ("f12" . org-agenda))
-
   )
 
 
@@ -364,8 +369,6 @@
   (setq org-stuck-projects (quote ("" nil nil "")))
 
   (defvar bh/hide-scheduled-and-waiting-next-tasks t)
-  (setq org-archive-mark-done nil)
-  (setq org-archive-location "%s_archive::* Archived Tasks")
 
   (setq org-list-allow-alphabetical t)
 
